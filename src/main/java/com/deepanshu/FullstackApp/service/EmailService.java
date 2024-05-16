@@ -29,7 +29,7 @@ public class EmailService {
     private SentEmailRepository sentEmailRepository;
 
 
-    public SentEmail sendEmails(List<Long> nonprofitIds, String foundationEmail, Long emailTemplateId) {
+    public SentEmail sendEmails(List<Long> nonprofitIds, String foundationEmail, Long emailTemplateId, String ccTo, String bccTo) {
         try {
             Optional<EmailTemplate> emailTemplateOptional = emailTemplateRepository.findById(emailTemplateId);
             if (!emailTemplateOptional.isPresent()) {
@@ -54,6 +54,8 @@ public class EmailService {
                     SentEmail sentEmail = new SentEmail();
                     sentEmail.setRecipientEmail(nonprofit.getEmail());
                     sentEmail.setFoundationEmail(foundationEmail);
+                    sentEmail.setCcTo(ccTo);
+                    sentEmail.setBccTo(bccTo);
                     sentEmail.setSubject(templateSubject);
                     sentEmail.setMessage(message);
                     sentEmail.setSentDateTime(LocalDateTime.now());

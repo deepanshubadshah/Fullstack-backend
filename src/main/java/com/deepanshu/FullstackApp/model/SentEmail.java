@@ -23,6 +23,8 @@ public class SentEmail {
 
     private String recipientEmail;
     private String foundationEmail;
+    private String ccTo;
+    private String bccTo;
     private String message;
     private String subject;
     private LocalDateTime sentDateTime;

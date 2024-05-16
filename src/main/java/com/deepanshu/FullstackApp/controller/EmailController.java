@@ -37,7 +37,9 @@ public class EmailController {
             List<Long> nonprofitIds = request.getNonprofitIds();
             String foundationEmail = request.getFoundationEmail();
             Long emailTemplateId = request.getEmailTemplateId();
-            SentEmail sentEmail = emailService.sendEmails(nonprofitIds, foundationEmail, emailTemplateId);
+            String ccTo = request.getCcTo();
+            String bccTo = request.getBccTo();
+            SentEmail sentEmail = emailService.sendEmails(nonprofitIds, foundationEmail, emailTemplateId, ccTo, bccTo);
             return new ResponseEntity<>(sentEmail != null ? sentEmail.getId() : null, HttpStatus.CREATED);
         } catch (Exception ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
