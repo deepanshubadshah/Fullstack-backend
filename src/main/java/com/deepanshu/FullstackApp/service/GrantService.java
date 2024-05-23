@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +21,8 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Pageable;
 
 
@@ -58,7 +61,16 @@ public class GrantService {
                 grant.setAwardedAmount(awardedAmount != null ? parseAmount(awardedAmount) : null);
 
                 grant.setGrantType(row[6] != null ? Grant.GrantType.valueOf(row[6]) : null);
-                grant.setTags(row[7] != null ? Arrays.asList(row[7].split(",")) : Collections.emptyList());
+                String tagsString = row[7] != null ? row[7] : null; // Get the tags string
+                List<String> tags;
+                if (tagsString != null) {
+                    tags = Arrays.stream(tagsString.split(","))
+                            .map(String::trim) // Trim trailing spaces
+                            .collect(Collectors.toList());
+                } else {
+                    tags = Collections.emptyList();
+                }
+                grant.setTags(tags);
                 grant.setDurationStart(parseDate(row[8]));
                 grant.setDurationEnd(parseDate(row[9]));
                 grant.setAdditionalFileFolderPath(row[10] != null ? row[10] : null);  // Assuming date, adjust if text field
@@ -79,15 +91,17 @@ public class GrantService {
 //        s3Client.putObject(request);
 //    }
 
-    public Page<Grant> getGrants(int pageNumber, String sortField, String sortOrder) {
+    public Page<Grant> getGrants(int pageNumber, String sortField, String sortOrder, List<String> tags, String searchQuery, Grant.GrantType grantType) {
         Sort sort;
         if (sortOrder.equalsIgnoreCase("asc")) {
             sort = Sort.by(sortField).ascending();
         } else {
             sort = Sort.by(sortField).descending();
         }
+
         Pageable pageable = PageRequest.of(pageNumber - 1, 10, sort.and(Sort.by("id").ascending()));
-        Page<Grant> grants = grantRepository.findAll(pageable);
+        Page<Grant> grants= grantRepository.findAllByTagsContaining(tags, searchQuery, grantType, pageable);
+
         int totalPages = grants.getTotalPages();
         return grants;
     }
@@ -115,6 +129,14 @@ public class GrantService {
                 throw new ParseException("Unrecognized date format: " + value, 0);
             }
         }
+    }
+
+    public List<String> findAllUniqueTags() {
+        return grantRepository.findAllUniqueTags();
+    }
+
+    public List<String> findAllUniqueGrantType() {
+        return grantRepository.findAllUniqueGrantType();
     }
 
 }
